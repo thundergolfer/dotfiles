@@ -1,0 +1,122 @@
+[user]
+	email = jonathon@canva.com
+	name = Jonathon Belotti
+[core]
+	editor = vim
+        whitespace = fix,-indent-with-non-tab,trailing-space,cr-at-eol
+	excludesfile = ~/.gitignore
+	pager = cat
+
+[web]
+	browser = google-chrome
+[rerere]
+	enabled = 0
+	autoupdate = 1
+[push]
+	default = simple
+[color]
+	ui = auto
+[color "branch"]
+	current = yellow bold
+	local = green bold
+	remote = cyan bold
+[color "diff"]
+	meta = yellow bold
+	frag = magenta bold
+	old = red bold
+	new = green bold
+	whitespace = red reverse
+[color "status"]
+	added = yellow bold
+	changed = green bold
+	untracked = red bold
+[diff]
+	tool = vimdiff
+[difftool]
+	prompt = false
+[github]
+	user = thundergolfer
+	token = token
+[alias]
+	br = branch --sort=-committerdate
+	brd = branch -d
+	brdd = branch -D
+	###############
+	ci = commit
+	ciam = commit --amend
+	###############
+	cl = clone
+	###############
+	cp = cherry-pick
+	###############
+	dc = diff --cached
+	###############
+	f = fetch
+	fo = fetch origin
+	fu = fetch upstream
+	###############
+  l = log --oneline -n 20 --abbrev=8
+	lg = log --oneline --graph --decorate
+  adog = log --all --decorate --oneline --graph
+	###############
+	ls = ls-files
+	lsf = !git ls-files | grep -i
+  ##############
+  psuh = push
+  puhs = push
+	###############
+	co = checkout
+	cob = checkout -b
+	###############
+	rbc = rebase --continue
+	rbi = rebase --interactive
+	rbs = rebase --skip
+	rba = rebase --abort
+	###############
+	st = status
+	stb = status -s -b
+	###############
+  behindinfront = rev-list --left-right --count
+
+# Print a link to the repo
+repo-link = !git remote get-url origin | sed -n 's_.*:\\(.*\\)\\.git_https://github.com/\\1_p'
+  
+# Print current branch
+branch-name = symbolic-ref --short HEAD
+  
+# Print a link to an existing PR matching current branch
+pr-link = !echo $(git repo-link)/compare/master...$(git branch-name)
+  
+# Push a new local branch to create a PR
+publish = !git push -u origin $(git branch-name) && open $(git pr-link)
+  
+delete-remote-branch = !git push origin :$(git branch-name)
+  
+###################################################################################
+# The following aliases only work with Canva's release branch naming conventions. #
+###################################################################################
+# Run `git fetch` before any of these to get the latest remote branches.
+ 
+list-releases = !git branch --list 'origin/release-*' --all --sort=committerdate | sed 's/.*origin\\/release-\\([^-]*\\).*/\\1/' | grep -v "dev" | grep -v "staging" | grep -v "prod" | uniq
+current-release = !git list-releases | grep -v "dev" | tail -n 1
+previous-release = !git list-releases | grep -v "dev" | tail -n 2 | head -n 1
+next-release = !git fetch origin master > /dev/null 2>&1 && git show remotes/origin/master:parent/pom.xml | sed -n 's/.*release.name>\\(.*\\)<.*/\\1/p' | grep -v "$(git current-release)"
+# If the above doesn't work, try this
+next-release-alt = !git branch --list 'origin/release-*-staging' 'origin/release-*-prod' --all --sort=committerdate | sed -n 's/.*origin\\/release-\\(.*\\)-.*/\\1/p' | grep -v "$(git current-release)" | tail -n 1 | grep -v "$(git previous-release)"
+ 
+get-code-freeze-commit = ! git show $(git merge-base master "release-$(git current-release)-prod") | head -n 6
+ls-changes-since-freeze = ! git diff --name-only "$(git merge-base master release-$(git current-release)-prod)" "release-$(git current-release)-prod"
+ls-changes-this-release = ! git diff --name-only "$(git merge-base release-$(git previous-release)-prod release-$(git current-release)-prod)" "release-$(git current-release)-prod"
+
+
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[man]
+	viewer = catman
+[protocol]
+	version = 2
+[http]
+	sslVerify = true
